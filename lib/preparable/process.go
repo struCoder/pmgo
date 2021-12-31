@@ -29,6 +29,7 @@ type Preparable struct {
 	Name       string
 	SourcePath string
 	Cmd        string
+	Cwd        string
 	SysFolder  string
 	Language   string
 	KeepAlive  bool
@@ -39,6 +40,7 @@ type BinaryPreparable struct {
 	Name       string
 	SourcePath string
 	Cmd        string
+	Cwd        string
 	SysFolder  string
 	Language   string
 	KeepAlive  bool
@@ -84,6 +86,7 @@ func (preparable *Preparable) Start() (process.ProcContainer, error) {
 	proc := &process.Proc{
 		Name:      preparable.Name,
 		Cmd:       preparable.Cmd,
+		Cwd:       preparable.Cwd,
 		Args:      preparable.Args,
 		Path:      preparable.getPath(),
 		Pidfile:   preparable.getPidPath(),
@@ -154,6 +157,7 @@ func (preparable *BinaryPreparable) Start() (process.ProcContainer, error) {
 	proc := &process.Proc{
 		Name:      preparable.Name,
 		Cmd:       preparable.Cmd,
+		Cwd:       preparable.Cwd,
 		Args:      preparable.Args,
 		Path:      preparable.getPath(),
 		Pidfile:   preparable.getPidPath(),

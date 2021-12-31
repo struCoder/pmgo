@@ -40,6 +40,7 @@ type ProcContainer interface {
 type Proc struct {
 	Name      string
 	Cmd       string
+	Cwd       string
 	Args      []string
 	Path      string
 	Pidfile   string
@@ -63,9 +64,11 @@ func (proc *Proc) Start() error {
 	if err != nil {
 		return err
 	}
-	wd, _ := os.Getwd()
+	if proc.Cwd == "" {
+		proc.Cwd, _ = os.Getwd()
+	}
 	procAtr := &os.ProcAttr{
-		Dir: wd,
+		Dir: proc.Cwd,
 		Env: os.Environ(),
 		Files: []*os.File{
 			os.Stdin,

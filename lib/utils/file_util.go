@@ -3,6 +3,7 @@ package utils
 import (
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 )
@@ -11,12 +12,26 @@ import (
 // permission mode to 0660
 // Returns an error in case there's any.
 func WriteFile(filepath string, b []byte) error {
+	dir := path.Dir(filepath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
 	return ioutil.WriteFile(filepath, b, 0660)
 }
 
 // GetFile will open filepath.
 // Returns a tuple with a file and an error in case there's any.
 func GetFile(filepath string) (*os.File, error) {
+	dir := path.Dir(filepath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return os.OpenFile(filepath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
 }
 

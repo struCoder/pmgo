@@ -28,6 +28,7 @@ import (
 
 	"github.com/struCoder/pmgo/lib/cli"
 	"github.com/struCoder/pmgo/lib/master"
+	"github.com/struCoder/pmgo/lib/utils"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/sevlyar/go-daemon"
@@ -35,7 +36,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"syscall"
 
 	"fmt"
@@ -46,15 +46,14 @@ import (
 )
 
 var (
-	app     = kingpin.New("pmgo", "Aguia Process Manager.")
-	dns     = app.Flag("dns", "TCP Dns host.").Default(":9876").String()
-	timeout = 30 * time.Second
+	app             = kingpin.New("pmgo", "Aguia Process Manager.")
+	serveConfigFile = app.Flag("config-file", "Config file location").String()
+	dns             = app.Flag("dns", "TCP Dns host.").Default(":9876").String()
+	timeout         = 30 * time.Second
 
-	serveStop           = app.Command("kill", "Kill daemon pmgo.")
-	serveStopConfigFile = serveStop.Flag("config-file", "Config file location").String()
+	serveStop = app.Command("kill", "Kill daemon pmgo.")
 
-	serve           = app.Command("serve", "Create pmgo daemon.")
-	serveConfigFile = serve.Flag("config-file", "Config file location").String()
+	serve = app.Command("serve", "Create pmgo daemon.")
 
 	resurrect = app.Command("resurrect", "Resurrect all previously save processes.")
 
@@ -63,6 +62,7 @@ var (
 	startName       = start.Arg("name", "Process name.").Required().String()
 	binFile         = start.Arg("binary", "compiled golang file").Bool()
 	startKeepAlive  = true
+	startCwd        = start.Flag("cwd", "Change the working directory").String()
 	startArgs       = start.Flag("args", "External args.").Strings()
 
 	restart     = app.Command("restart", "Restart a process.")
@@ -100,7 +100,7 @@ func main() {
 	case start.FullCommand():
 		checkRemoteMasterServer()
 		cli := cli.InitCli(*dns, timeout)
-		cli.StartGoBin(*startSourcePath, *startName, startKeepAlive, *startArgs, *binFile)
+		cli.StartGoBin(*startSourcePath, *startName, startKeepAlive, *startArgs, *startCwd, *binFile)
 		cli.Status()
 	case restart.FullCommand():
 		checkRemoteMasterServer()
@@ -146,17 +146,51 @@ func isDaemonRunning(ctx *daemon.Context) (bool, *os.Process, error) {
 	return true, d, nil
 }
 
+var ctx *daemon.Context
+
 func getCtx() *daemon.Context {
+	if ctx != nil {
+		return ctx
+	}
 	if *serveConfigFile == "" {
-		folderPath := os.Getenv("HOME")
-		*serveConfigFile = folderPath + "/.pmgo/config.toml"
-		os.MkdirAll(path.Dir(*serveConfigFile), 0755)
+		configFile := os.Getenv("PMGO_CONFIG_FILE")
+		if configFile != "" {
+			*serveConfigFile = configFile
+		} else {
+			folderPath := os.Getenv("HOME")
+			*serveConfigFile = folderPath + "/.pmgo/config.toml"
+		}
 	}
 
-	ctx := &daemon.Context{
-		PidFileName: path.Join(filepath.Dir(*serveConfigFile), "main.pid"),
+	dir := path.Dir(*serveConfigFile)
+	os.MkdirAll(dir, 0755)
+
+	decodableMaster := master.DecodableMaster{}
+	err := utils.SafeReadTomlFile(*serveConfigFile, &decodableMaster)
+	if err != nil && !os.IsNotExist(err) {
+		panic(err)
+	}
+
+	if decodableMaster.SysFolder != "" {
+		dir = decodableMaster.SysFolder
+	}
+
+	if decodableMaster.PidFile == "" {
+		decodableMaster.PidFile = path.Join(dir, "main.pid")
+	} else {
+		os.MkdirAll(path.Dir(decodableMaster.PidFile), 0755)
+	}
+
+	if decodableMaster.OutFile == "" {
+		decodableMaster.OutFile = path.Join(dir, "main.log")
+	} else {
+		os.MkdirAll(path.Dir(decodableMaster.OutFile), 0755)
+	}
+
+	ctx = &daemon.Context{
+		PidFileName: decodableMaster.PidFile,
 		PidFilePerm: 0644,
-		LogFileName: path.Join(filepath.Dir(*serveConfigFile), "main.log"),
+		LogFileName: decodableMaster.OutFile,
 		LogFilePerm: 0640,
 		WorkDir:     "./",
 		Umask:       027,

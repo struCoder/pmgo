@@ -26,6 +26,7 @@ type GoBin struct {
 	Name       string   // Name is the process name that will be given to the process.
 	KeepAlive  bool     // KeepAlive will determine whether pmgo should keep the proc live or not.
 	Args       []string // Args is an array containing all the extra args that will be passed to the binary after compilation.
+	Cwd        string   // Change the working directory
 	BinFile    bool
 }
 
@@ -67,7 +68,7 @@ func (remote_master *RemoteMaster) StartGoBin(goBin *GoBin, ack *bool) error {
 	if goBin.BinFile {
 		isFromBinFile = true
 	}
-	preparable, output, err := remote_master.master.Prepare(goBin.SourcePath, goBin.Name, "go", goBin.KeepAlive, goBin.Args, isFromBinFile)
+	preparable, output, err := remote_master.master.Prepare(goBin.SourcePath, goBin.Name, "go", goBin.KeepAlive, goBin.Args, goBin.Cwd, isFromBinFile)
 	*ack = true
 	if err != nil {
 		return fmt.Errorf("ERROR: %s OUTPUT: %s", err, string(output))
@@ -176,7 +177,7 @@ func (client *RemoteClient) Save() error {
 
 // StartGoBin is a wrapper that calls the remote StartsGoBin.
 // It returns an error in case there's any.
-func (client *RemoteClient) StartGoBin(sourcePath string, name string, keepAlive bool, args []string, binFile bool) error {
+func (client *RemoteClient) StartGoBin(sourcePath string, name string, keepAlive bool, args []string, cwd string, binFile bool) error {
 	var started bool
 	goBin := &GoBin{
 		SourcePath: sourcePath,
@@ -184,6 +185,7 @@ func (client *RemoteClient) StartGoBin(sourcePath string, name string, keepAlive
 		KeepAlive:  keepAlive,
 		Args:       args,
 		BinFile:    binFile,
+		Cwd:        cwd,
 	}
 
 	return client.conn.Call("RemoteMaster.StartGoBin", goBin, &started)
