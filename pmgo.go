@@ -83,6 +83,10 @@ var (
 
 	info     = app.Command("info", "Describe importance parameters of a process id")
 	infoName = info.Arg("name", "process name").Required().String()
+
+	logs     = app.Command("logs", "Get logs of a process id")
+	logsName = logs.Arg("name", "process name").Required().String()
+	logsArgs = logs.Flag("follow", "follow logs").Bool()
 )
 
 func main() {
@@ -129,6 +133,9 @@ func main() {
 		checkRemoteMasterServer()
 		cli := cli.InitCli(*dns, timeout)
 		cli.ProcInfo(*infoName)
+	case logs.FullCommand():
+		cli := cli.InitCli(*dns, timeout)
+		cli.Logs(*logsName, *logsArgs)
 	}
 }
 

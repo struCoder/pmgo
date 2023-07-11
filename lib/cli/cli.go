@@ -1,8 +1,12 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
+	"github.com/hpcloud/tail"
+	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -27,6 +31,69 @@ func InitCli(dsn string, timeout time.Duration) *Cli {
 	return &Cli{
 		remoteClient: client,
 	}
+}
+
+// Logs
+//
+// Logs will display the logs of a process.
+// --follow will follow the logs.
+func (cli *Cli) Logs(name string, follow bool) {
+	userDirectory, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	_, err = os.Stat(userDirectory + "/.pmgo/" + name)
+	if err != nil {
+		fmt.Println(fmt.Errorf("Process %s logs not found", name))
+	}
+	if follow {
+		cli.followLogs(userDirectory, name)
+	} else {
+		cli.getLogs(userDirectory, name)
+	}
+}
+
+func (cli *Cli) getLogs(userDirectory, name string) {
+	files := []string{
+		fmt.Sprintf("%s/.pmgo/%s/%s.err", userDirectory, name, name),
+		fmt.Sprintf("%s/.pmgo/%s/%s.out", userDirectory, name, name),
+	}
+	for _, file := range files {
+		if _, err := os.Stat(file); err != nil {
+			fmt.Println(fmt.Errorf("Process %s logs not found", name))
+			return
+		}
+		file, err := os.Open(file)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+	}
+}
+
+func (cli *Cli) followLogs(userDirectory, name string) {
+	files := []string{
+		fmt.Sprintf("%s/.pmgo/%s/%s.err", userDirectory, name, name),
+		fmt.Sprintf("%s/.pmgo/%s/%s.out", userDirectory, name, name),
+	}
+	var wg sync.WaitGroup
+	for _, file := range files {
+		wg.Add(1)
+		go func(file string) {
+			t, err := tail.TailFile(file, tail.Config{Follow: true, ReOpen: true})
+			if err != nil {
+				panic(err)
+			}
+			for line := range t.Lines {
+				fmt.Println(line.Text)
+			}
+		}(file)
+	}
+	wg.Wait()
 }
 
 // Save will save all previously saved processes onto a list.
