@@ -1,0 +1,46 @@
+# PMGO Test Configuration
+# This configuration is optimized for testing and development
+
+server:
+  host: "localhost"
+  port: 9876
+  web_port: 8080
+  tls_enabled: false
+
+logging:
+  level: "debug"  # More verbose for testing
+  format: "text"  # Easier to read during development
+  file: "examples/logs/pmgo-test.log"
+  rotate: true
+  max_size: 10    # Smaller files for testing
+  max_backups: 3
+  max_age: 7
+
+processes:
+  default_restart_policy: "always"
+  max_restart_attempts: 3  # Fewer attempts for testing
+  restart_delay: "2s"      # Faster restart for testing
+  health_check_interval: "10s"  # More frequent checks
+  metrics_enabled: true
+  output_buffer_size: 512
+
+security:
+  auth_enabled: false  # Disabled for testing
+  jwt_secret: "test-secret-key"
+  token_expiry: "1h"
+  api_keys: []
+
+database:
+  type: "sqlite"
+  dsn: "examples/data/pmgo-test.db"
+  max_open_conns: 5
+  max_idle_conns: 2
+
+monitoring:
+  metrics_enabled: true
+  metrics_path: "/metrics"
+  health_path: "/health"
+  pprof_enabled: true  # Enabled for testing/debugging
+
+notifications:
+  enabled: false  # Disabled for testing

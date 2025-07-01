@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/olekukonko/tablewriter"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -77,13 +76,8 @@ func GetTableWriter() *tablewriter.Table {
 	return table
 }
 
-// CheckSourceFolderExit will check source code folder exist
-func CheckSourceFolderExit(sourceFolder string) (bool, error) {
-	gopath := os.Getenv("GOPATH")
-	err := os.Chdir(gopath + "/src/" + sourceFolder)
-	if err != nil {
-		log.Errorln(sourceFolder+" doesn't exit under GOPATH", err)
-		return false, err
-	}
-	return true, nil
-}
+// CheckSourceFolderExit is deprecated - no longer used in modern Go modules
+// func CheckSourceFolderExit(sourceFolder string) (bool, error) {
+// 	// This function was used for GOPATH structure and is no longer needed
+// 	return true, nil
+// }

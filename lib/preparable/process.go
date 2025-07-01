@@ -9,7 +9,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/struCoder/pmgo/lib/process"
-	"github.com/struCoder/pmgo/lib/utils"
 )
 
 // ProcPreparable is a preparable with all the necessary informations to run
@@ -50,12 +49,8 @@ type BinaryPreparable struct {
 // Returns the compile command output.
 func (preparable *Preparable) PrepareBin() ([]byte, error) {
 	// Remove the last character '/' if present
-	if preparable.SourcePath[len(preparable.SourcePath)-1] == '/' {
+	if len(preparable.SourcePath) > 0 && preparable.SourcePath[len(preparable.SourcePath)-1] == '/' {
 		preparable.SourcePath = strings.TrimSuffix(preparable.SourcePath, "/")
-	}
-	isExist, err := utils.CheckSourceFolderExit(preparable.SourcePath)
-	if !isExist {
-		return make([]byte, 0), err
 	}
 
 	binPath := preparable.getBinPath()
@@ -64,9 +59,49 @@ func (preparable *Preparable) PrepareBin() ([]byte, error) {
 	cmdArgs := []string{}
 	if preparable.Language == "go" {
 		cmd = "go"
-		sourceCodePath := os.Getenv("GOPATH") + "/src/" + preparable.SourcePath
-		cmdArgs = []string{"build", "-o", binPath, sourceCodePath + "/."}
+
+		// Check if SourcePath is an absolute path or relative path
+		sourceCodePath := preparable.SourcePath
+		if filepath.IsAbs(sourceCodePath) {
+			// For absolute paths, check if it's a .go file
+			if strings.HasSuffix(sourceCodePath, ".go") {
+				// It's a Go source file, build it directly
+				cmdArgs = []string{"build", "-o", binPath, sourceCodePath}
+			} else {
+				// It's a directory with Go package
+				cmdArgs = []string{"build", "-o", binPath, sourceCodePath + "/."}
+			}
+		} else {
+			// For relative paths, try modern Go modules first, fallback to GOPATH
+			if _, err := os.Stat(sourceCodePath); err == nil {
+				// Path exists relative to current directory
+				if strings.HasSuffix(sourceCodePath, ".go") {
+					cmdArgs = []string{"build", "-o", binPath, sourceCodePath}
+				} else {
+					cmdArgs = []string{"build", "-o", binPath, sourceCodePath + "/."}
+				}
+			} else {
+				// Fallback to GOPATH structure, but only if GOPATH is actually set
+				gopath := os.Getenv("GOPATH")
+				if gopath != "" {
+					gopathSrc := gopath + "/src/" + sourceCodePath
+					if _, err := os.Stat(gopathSrc); err == nil {
+						cmdArgs = []string{"build", "-o", binPath, gopathSrc + "/."}
+					} else {
+						return make([]byte, 0), fmt.Errorf("source path not found: %s (checked: %s)", sourceCodePath, gopathSrc)
+					}
+				} else {
+					// No GOPATH set and relative path doesn't exist - try building anyway for Go modules
+					if strings.HasSuffix(sourceCodePath, ".go") {
+						cmdArgs = []string{"build", "-o", binPath, sourceCodePath}
+					} else {
+						cmdArgs = []string{"build", "-o", binPath, sourceCodePath + "/."}
+					}
+				}
+			}
+		}
 	}
+
 	preparable.Cmd = binPath
 	out, err := exec.Command(cmd, cmdArgs...).Output()
 	if err != nil {

@@ -134,7 +134,7 @@ func (remote_master *RemoteMaster) Stop() error {
 	return remote_master.master.Stop()
 }
 
-//GetProcByName will return proc detail info by name
+// GetProcByName will return proc detail info by name
 func (remote_master *RemoteMaster) GetProcByName(procName string, response *map[string]string) error {
 	*response = remote_master.master.ProcInfo(procName)
 	return nil
@@ -220,9 +220,9 @@ func (client *RemoteClient) DeleteProcess(procName string) error {
 // MonitStatus is a wrapper that calls the remote MonitStatus.
 // It returns a tuple with a list of process and an error in case there's any.
 func (client *RemoteClient) MonitStatus() (ProcResponse, error) {
-	var responses *ProcResponse
+	var responses ProcResponse
 	err := client.conn.Call("RemoteMaster.MonitStatus", "", &responses)
-	return *responses, err
+	return responses, err
 }
 
 // GetProcByName will return proc info by name

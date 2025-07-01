@@ -1,0 +1,99 @@
+# PMGO Configuration File
+# This file contains all configuration options for PMGO
+
+# Server configuration
+server:
+  # Host to bind the daemon server
+  host: "localhost"
+  # Port for RPC communication
+  port: 9876
+  # Port for web interface
+  web_port: 8080
+  # Enable HTTPS
+  tls_enabled: false
+  # TLS certificate file path
+  tls_cert: ""
+  # TLS key file path
+  tls_key: ""
+
+# Logging configuration
+logging:
+  # Log level: debug, info, warn, error
+  level: "info"
+  # Log format: text, json
+  format: "text"
+  # Log output file (empty for stdout)
+  file: ""
+  # Enable log rotation
+  rotate: true
+  # Maximum log file size in MB
+  max_size: 100
+  # Maximum number of old log files to retain
+  max_backups: 3
+  # Maximum number of days to retain old log files
+  max_age: 28
+
+# Process management configuration
+processes:
+  # Default restart policy: always, on-failure, no
+  default_restart_policy: "always"
+  # Maximum restart attempts for failed processes
+  max_restart_attempts: 5
+  # Delay between restart attempts
+  restart_delay: "1s"
+  # Process health check interval
+  health_check_interval: "30s"
+  # Enable process metrics collection
+  metrics_enabled: true
+  # Process output buffer size
+  output_buffer_size: 1024
+
+# Security configuration
+security:
+  # Enable authentication
+  auth_enabled: false
+  # JWT secret key
+  jwt_secret: ""
+  # Token expiration time
+  token_expiry: "24h"
+  # Allowed API keys
+  api_keys: []
+
+# Database configuration (for future use)
+database:
+  # Database type: sqlite, postgres, mysql
+  type: "sqlite"
+  # Database connection string
+  dsn: "./pmgo.db"
+  # Maximum number of open connections
+  max_open_conns: 10
+  # Maximum number of idle connections
+  max_idle_conns: 5
+
+# Monitoring configuration
+monitoring:
+  # Enable metrics endpoint
+  metrics_enabled: true
+  # Metrics endpoint path
+  metrics_path: "/metrics"
+  # Health check endpoint path
+  health_path: "/health"
+  # Enable profiling endpoint
+  pprof_enabled: false
+
+# Notification configuration
+notifications:
+  # Enable notifications
+  enabled: false
+  # Webhook URL for notifications
+  webhook_url: ""
+  # Slack webhook URL
+  slack_webhook: ""
+  # Email configuration
+  email:
+    smtp_host: ""
+    smtp_port: 587
+    username: ""
+    password: ""
+    from: ""
+    to: []

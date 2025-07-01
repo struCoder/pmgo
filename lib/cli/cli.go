@@ -115,10 +115,19 @@ func (cli *Cli) Status() {
 		if proc.Status.Status != "running" {
 			status = color.RedString(proc.Status.Status)
 		}
+
+		// Format CPU percentage with one decimal place
+		cpuStr := "0.0"
+		memoryVal := 0
+		if proc.Status.Sys != nil {
+			cpuStr = fmt.Sprintf("%.1f", proc.Status.Sys.CPU)
+			memoryVal = int(proc.Status.Sys.Memory)
+		}
+
 		table.Append([]string{
 			color.CyanString(proc.Name), fmt.Sprintf("%d", proc.Pid), status, proc.Status.Uptime,
-			strconv.Itoa(proc.Status.Restarts), strconv.Itoa(int(proc.Status.Sys.CPU)),
-			utils.FormatMemory(int(proc.Status.Sys.Memory)),
+			strconv.Itoa(proc.Status.Restarts), cpuStr,
+			utils.FormatMemory(memoryVal),
 		})
 	}
 
