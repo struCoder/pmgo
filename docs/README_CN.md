@@ -19,6 +19,7 @@ PMGO 是一个用 Go 语言编写的轻量级、现代化进程管理器，专�
 
 - [安装](#安装)
 - [快速开始](#快速开始)
+- [帮助系统](#帮助系统)
 - [配置](#配置)
 - [命令参考](#命令参考)
 - [API 文档](#api-文档)
@@ -71,34 +72,107 @@ pmgo serve --daemon
 ### 2. 管理进程
 
 ```bash
-# 启动一个 Go 应用程序
-pmgo start /path/to/your/app.go myapp
+# 启动 Go 源文件
+pmgo start app.go myapp --args="port=8080"
 
-# 从编译的二进制文件启动
-pmgo start /path/to/binary myapp --binary
+# 启动二进制可执行文件
+pmgo start ./myapp myapp --binary --args="config.yaml"
 
-# 带参数启动
-pmgo start app.go myapp --args="--port=8080 --env=prod"
+# 使用多个参数启动
+pmgo start ./server webserver -b --args="--port=8080" --args="--env=prod"
 
-# 查看所有进程
+# 查看所有进程状态和资源使用情况
 pmgo list
 
-# 查看进程详情
+# 查看进程详细信息
 pmgo info myapp
 
 # 重启进程
 pmgo restart myapp
 
-# 停止进程
+# 停止进程（保留在进程列表中）
 pmgo stop myapp
 
-# 删除进程
+# 永久删除进程
 pmgo delete myapp
+
+# 显示帮助信息和示例
+pmgo help
+pmgo help start  # 查看start命令的详细帮助
 ```
 
 ### 3. Web 界面
 
 打开浏览器访问 `http://localhost:8080` 来使用 Web 管理界面。
+
+## 💡 帮助系统
+
+PMGO 提供了完善的帮助系统，每个命令都有详细的说明和使用示例。
+
+### 查看总体帮助
+
+```bash
+pmgo help
+```
+
+输出示例：
+```
+PMGO - A lightweight process manager for Go applications.
+
+Examples:
+  pmgo start app.go myapp                    # Start Go source file
+  pmgo start ./mybin myapp --binary          # Start binary executable
+  pmgo start app.go myapp --args="port=8080" # Start with arguments
+  pmgo list                                  # List all processes
+
+Commands:
+  start [<flags>] <source> <name>
+    Start and monitor a Go application or binary executable.
+
+  list
+    List all managed processes with status and resource usage.
+
+  info <name>
+    Show detailed information and statistics about a process.
+```
+
+### 查看命令详细帮助
+
+```bash
+pmgo help start
+```
+
+输出示例：
+```
+usage: pmgo start [<flags>] <source> <name>
+
+Start and monitor a Go application or binary executable.
+
+Examples:
+  pmgo start app.go myapp --args="port=8080"   # Go source
+  pmgo start ./mybin myapp --binary            # Binary file
+  pmgo start app.go myapp -b --args="config"   # Multiple args
+
+Flags:
+  -b, --binary         Treat source as binary executable (not Go source)
+      --args=ARGS ...  Arguments to pass to the process
+
+Args:
+  <source>  Go source file (.go) or binary executable path
+  <name>    Unique process name for management
+```
+
+### 常用帮助命令
+
+```bash
+pmgo help              # 查看所有命令概览
+pmgo help start        # 启动进程的详细说明
+pmgo help list         # 进程列表的详细说明
+pmgo help info         # 进程信息的详细说明
+pmgo help restart      # 重启进程的详细说明
+pmgo help stop         # 停止进程的详细说明
+pmgo help delete       # 删除进程的详细说明
+```
 
 ## ⚙️ 配置
 
@@ -153,45 +227,54 @@ notifications:
 
 ## 📚 命令参考
 
+### 帮助和示例
+
+```bash
+# 显示所有命令和使用示例
+pmgo help
+
+# 显示特定命令的详细帮助
+pmgo help start
+pmgo help list
+pmgo help info
+```
+
 ### 守护进程管理
 
 ```bash
-# 启动守护进程
-pmgo serve [--daemon] [--config config.yaml]
+# 启动守护进程（通常自动启动）
+pmgo serve
 
-# 停止守护进程
+# 停止守护进程和所有管理的进程
 pmgo kill
-
-# 查看守护进程状态
-pmgo status
 ```
 
 ### 进程管理
 
 ```bash
-# 启动进程
+# 启动进程（新的优化格式）
 pmgo start <source> <name> [flags]
-  --args stringSlice    进程参数
-  --binary             从二进制文件启动
-  --restart-policy     重启策略 (always|on-failure|no)
-  --max-restarts int   最大重启次数
-  --env stringSlice    环境变量
+  -b, --binary         将源文件视为二进制可执行文件
+      --args=ARGS ...  传递给进程的参数
 
-# 管理进程
-pmgo stop <name>           # 停止进程
-pmgo restart <name>        # 重启进程
-pmgo delete <name>         # 删除进程
-pmgo list                  # 列出所有进程
-pmgo info <name>           # 查看进程详情
-pmgo logs <name>           # 查看进程日志
+# 使用示例：
+pmgo start app.go myapp --args="port=8080"          # Go 源文件
+pmgo start ./mybin myapp --binary                   # 二进制文件
+pmgo start app.go myapp -b --args="config.yaml"     # 多个参数
+
+# 进程控制
+pmgo list                  # 列出所有进程及资源使用情况
+pmgo info myapp           # 查看进程详细信息和统计数据
+pmgo restart myapp        # 重启进程
+pmgo stop myapp           # 停止进程（保留在进程列表中）
+pmgo delete myapp         # 永久删除进程和所有文件
 ```
 
 ### 其他命令
 
 ```bash
-pmgo save              # 保存当前进程列表
-pmgo web               # 启动 Web 界面
-pmgo version           # 查看版本信息
+pmgo save              # 保存当前进程列表到配置文件
+pmgo version           # 显示 PMGO 版本信息
 ```
 
 ## 🔌 API 文档

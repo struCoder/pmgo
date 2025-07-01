@@ -59,29 +59,105 @@ chmod +x pmgo && sudo mv pmgo /usr/local/bin/
 #### Basic Usage
 
 ```bash
-# Start daemon
+# Start daemon (auto-starts when needed)
 pmgo serve
 
-# Start a Go application
-pmgo start /path/to/your/app app-name
+# Start a Go source file
+pmgo start app.go myapp --args="port=8080"
 
-# List all processes
+# Start a binary executable
+pmgo start ./myapp myapp --binary --args="config.yaml"
+
+# Start with multiple arguments
+pmgo start ./server webserver -b --args="--port=8080" --args="--env=prod"
+
+# List all processes with detailed status
 pmgo list
 
-# Web interface (default: http://localhost:8080)
-pmgo web
-
-# Stop a process
-pmgo stop app-name
+# View detailed process information
+pmgo info myapp
 
 # Restart a process
-pmgo restart app-name
+pmgo restart myapp
 
-# View process details
-pmgo info app-name
+# Stop a process (keeps in process list)
+pmgo stop myapp
 
-# Delete a process
-pmgo delete app-name
+# Delete a process permanently
+pmgo delete myapp
+
+# Show help with examples
+pmgo help
+pmgo help start  # Command-specific help
+```
+
+### 💡 Help System
+
+PMGO provides comprehensive help with detailed examples for every command.
+
+#### General Help
+
+```bash
+pmgo help
+```
+
+Sample output:
+```
+PMGO - A lightweight process manager for Go applications.
+
+Examples:
+  pmgo start app.go myapp                    # Start Go source file
+  pmgo start ./mybin myapp --binary          # Start binary executable
+  pmgo start app.go myapp --args="port=8080" # Start with arguments
+  pmgo list                                  # List all processes
+
+Commands:
+  start [<flags>] <source> <name>
+    Start and monitor a Go application or binary executable.
+
+  list
+    List all managed processes with status and resource usage.
+
+  info <name>
+    Show detailed information and statistics about a process.
+```
+
+#### Command-Specific Help
+
+```bash
+pmgo help start
+```
+
+Sample output:
+```
+usage: pmgo start [<flags>] <source> <name>
+
+Start and monitor a Go application or binary executable.
+
+Examples:
+  pmgo start app.go myapp --args="port=8080"   # Go source
+  pmgo start ./mybin myapp --binary            # Binary file
+  pmgo start app.go myapp -b --args="config"   # Multiple args
+
+Flags:
+  -b, --binary         Treat source as binary executable (not Go source)
+      --args=ARGS ...  Arguments to pass to the process
+
+Args:
+  <source>  Go source file (.go) or binary executable path
+  <name>    Unique process name for management
+```
+
+#### Available Help Commands
+
+```bash
+pmgo help              # Show all commands overview
+pmgo help start        # Detailed start command help
+pmgo help list         # Detailed list command help
+pmgo help info         # Detailed info command help
+pmgo help restart      # Detailed restart command help
+pmgo help stop         # Detailed stop command help
+pmgo help delete       # Detailed delete command help
 ```
 
 ### 📖 Advanced Usage
@@ -108,16 +184,33 @@ processes:
   restart_delay: "1s"
 ```
 
-#### Process Configuration
+#### Command Reference
 
 ```bash
-# Start with custom configuration
-pmgo start app.go myapp \
-  --restart-policy=on-failure \
-  --max-restarts=3 \
-  --restart-delay=5s \
-  --env="KEY=value" \
-  --args="--port=8080"
+# Help and Examples
+pmgo help                           # Show all commands with examples
+pmgo help start                     # Show detailed start command help
+
+# Process Management
+pmgo start <source> <name> [flags]  # Start and monitor an application
+  -b, --binary                      # Treat source as binary executable
+      --args=ARGS ...               # Arguments to pass to the process
+
+# Examples:
+pmgo start app.go myapp --args="port=8080"          # Go source file
+pmgo start ./mybin myapp --binary                   # Binary executable
+pmgo start app.go myapp -b --args="config.yaml"     # Multiple args
+
+# Process Control
+pmgo list                           # List processes with resource usage
+pmgo info myapp                     # Show detailed process information
+pmgo restart myapp                  # Restart a managed process
+pmgo stop myapp                     # Stop process (keeps in list)
+pmgo delete myapp                   # Delete process permanently
+
+# Daemon Management
+pmgo serve                          # Start PMGO daemon
+pmgo kill                           # Stop daemon and all processes
 ```
 
 #### API Examples
